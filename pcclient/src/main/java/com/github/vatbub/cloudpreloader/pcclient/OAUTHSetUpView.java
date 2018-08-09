@@ -9,9 +9,9 @@ package com.github.vatbub.cloudpreloader.pcclient;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ package com.github.vatbub.cloudpreloader.pcclient;
  */
 
 
+import com.github.vatbub.cloudpreloader.logic.OAuthCredentials;
 import com.teamdev.jxbrowser.chromium.events.*;
 import com.teamdev.jxbrowser.chromium.javafx.BrowserView;
 import javafx.application.Platform;
@@ -28,7 +29,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
@@ -57,8 +57,6 @@ public class OAUTHSetUpView {
     @FXML
     private BrowserView webView;
 
-    @FXML
-    private ProgressBar statusBar;
     private OnResultRunnable onResultRunnable;
 
     public static void show(URL baseURL, String clientId, URL redirectURL, OnResultRunnable onResultRunnable) throws IOException {
@@ -104,6 +102,12 @@ public class OAUTHSetUpView {
         // Set Icon
         // primaryStage.getIcons().add(new Image(MainWindow.class.getResourceAsStream("icon.png")));
 
+        controller.getStage().setOnCloseRequest((event) -> {
+            // controller.webView.getBrowser().stop();
+            // System.setProperty("jxbrowser.await.timeout.seconds", "2");
+            // controller.webView.getBrowser().dispose();
+        });
+
         controller.getStage().show();
     }
 
@@ -122,7 +126,6 @@ public class OAUTHSetUpView {
     void initialize() {
         assert urlTextBox != null : "fx:id=\"urlTextBox\" was not injected: check your FXML file 'OAUTHSetUpView.fxml'.";
         assert webView != null : "fx:id=\"webView\" was not injected: check your FXML file 'OAUTHSetUpView.fxml'.";
-        assert statusBar != null : "fx:id=\"statusBar\" was not injected: check your FXML file 'OAUTHSetUpView.fxml'.";
 
         registerWebviewHooks();
         initialized = true;
@@ -135,101 +138,43 @@ public class OAUTHSetUpView {
         webView.getBrowser().addLoadListener(new LoadListener() {
             @Override
             public void onStartLoadingFrame(StartLoadingEvent startLoadingEvent) {
-                System.out.println("onStartLoadingFrame: ");
                 urlTextBox.setText(webView.getBrowser().getURL());
             }
 
             @Override
             public void onProvisionalLoadingFrame(ProvisionalLoadingEvent provisionalLoadingEvent) {
-                System.out.println("onProvisionalLoadingFrame: ");
+                urlTextBox.setText(webView.getBrowser().getURL());
             }
 
             @Override
             public void onFinishLoadingFrame(FinishLoadingEvent finishLoadingEvent) {
-                System.out.println("onFinishLoadingFrame: ");
                 String location = webView.getBrowser().getURL();
-                System.out.println(location);
+                urlTextBox.setText(location);
                 if (location.startsWith(getRedirectURL().toExternalForm())) {
                     Map<String, String> queryMap = getQueryMap(location.split("#")[1]);
 
-                    String accessToken = null;
-                    String authenticationToken = null;
-                    String userId = null;
-
-                    for (Map.Entry<String, String> entry : queryMap.entrySet()) {
-                        switch (entry.getKey()) {
-                            case "access_token":
-                                accessToken = entry.getValue();
-                                break;
-                            case "authentication_token":
-                                authenticationToken = entry.getValue();
-                                break;
-                            case "user_id":
-                                userId = entry.getValue();
-                                break;
-                        }
-                    }
+                    OAuthCredentials credentials = new OAuthCredentials(queryMap);
 
                     Platform.runLater(() ->getStage().hide());
-                    onResultRunnable.onResult(accessToken, authenticationToken, userId);
-
+                    getOnResultRunnable().onResult(credentials);
                 }
             }
 
             @Override
             public void onFailLoadingFrame(FailLoadingEvent failLoadingEvent) {
-                System.out.println("onFailLoadingFrame: ");
+                urlTextBox.setText(webView.getBrowser().getURL());
             }
 
             @Override
             public void onDocumentLoadedInFrame(FrameLoadEvent frameLoadEvent) {
-                System.out.println("onDocumentLoadedInFrame: ");
+                urlTextBox.setText(webView.getBrowser().getURL());
             }
 
             @Override
             public void onDocumentLoadedInMainFrame(LoadEvent loadEvent) {
-                System.out.println("onDocumentLoadedInMainFrame: ");
+                urlTextBox.setText(webView.getBrowser().getURL());
             }
         });
-
-        /*webView.getEngine().getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.equals(Worker.State.SUCCEEDED))
-                return;
-
-            try {
-                String location = webView.getEngine().getLocation();
-                if (location.startsWith(getRedirectURL().toExternalForm())) {
-                    URL locationURI = new URL(location);
-                    Map<String, String> queryMap = getQueryMap(locationURI.getQuery());
-
-                    String accessToken = null;
-                    String authenticationToken = null;
-                    String userId = null;
-
-                    for (Map.Entry<String, String> entry : queryMap.entrySet()) {
-                        switch (entry.getKey()) {
-                            case "access_token":
-                                accessToken = entry.getValue();
-                                break;
-                            case "authentication_token":
-                                authenticationToken = entry.getValue();
-                                break;
-                            case "user_id":
-                                userId = entry.getValue();
-                                break;
-                        }
-                    }
-
-                    getStage().hide();
-                    onResultRunnable.onResult(accessToken, authenticationToken, userId);
-                }
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-        }); */
-
-        // webView.getEngine().getLoadWorker().progressProperty().addListener((observable, oldValue, newValue) -> statusBar.setProgress(newValue.doubleValue()));
-        // webView.getEngine().locationProperty().addListener((observable, oldValue, newValue) -> urlTextBox.setText(newValue));
     }
 
     public Stage getStage() {
@@ -269,6 +214,6 @@ public class OAUTHSetUpView {
     }
 
     public interface OnResultRunnable {
-        void onResult(String accessToken, String authenticationToken, String userId);
+        void onResult(OAuthCredentials credentials);
     }
 }
