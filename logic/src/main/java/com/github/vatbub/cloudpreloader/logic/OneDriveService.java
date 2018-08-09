@@ -28,7 +28,7 @@ import java.net.URL;
 
 public class OneDriveService extends Service {
     @Override
-    public void sendFile(URL url, Credentials credentials, Runnable onFinished) throws IOException {
+    public void sendFile(URL url, String fileName, Credentials credentials, Runnable onFinished) throws IOException {
         throw new NotImplementedException("Sending not implemented");
     }
 

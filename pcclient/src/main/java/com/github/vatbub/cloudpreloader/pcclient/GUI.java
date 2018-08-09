@@ -9,9 +9,9 @@ package com.github.vatbub.cloudpreloader.pcclient;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,6 +47,8 @@ public class GUI {
     @FXML
     private TextField enterUrl;
     @FXML
+    private TextField enterFilename;
+    @FXML
     private Button send;
     @FXML
     private CheckBox allowInBackground;
@@ -63,7 +65,7 @@ public class GUI {
     void sendOnAction(ActionEvent event) throws IOException {
         Service.KnownImplementations implementation = servicePicker.getSelectionModel().getSelectedItem();
         Credentials credentials = CredentialsManager.getInstance().getCredentials(implementation);
-        Service.getInstance(implementation).sendFile(new URL(enterUrl.getText()), credentials, () -> System.out.println("Finished!"));
+        Service.getInstance(implementation).sendFile(new URL(enterUrl.getText()), enterFilename.getText(), credentials, () -> System.out.println("Finished!"));
     }
 
     @FXML
@@ -79,40 +81,16 @@ public class GUI {
             case OneDrive:
                 List<String> scopes = new ArrayList<>();
                 scopes.add("User.Read");
-                OAUTHSetUpView.show(new URL("https://login.microsoftonline.com/common/oauth2/v2.0/authorize"), "05e2a1c2-fedc-431e-81b5-4da5676e5961", new URL("https://login.live.com/oauth20_desktop.srf"), scopes, (accessToken, authenticationToken, userId) -> {
-                    System.out.println("accessToken = " + accessToken);
-                    System.out.println("authenticationToken = " + authenticationToken);
-                    System.out.println("userId = " + userId);
+                OAUTHSetUpView.show(new URL("https://login.microsoftonline.com/common/oauth2/v2.0/authorize"), "05e2a1c2-fedc-431e-81b5-4da5676e5961", new URL("https://login.live.com/oauth20_desktop.srf"), scopes, (credentials) -> {
+                    System.out.println("accessToken = " + credentials.getAccessToken());
+                    System.out.println("authenticationToken = " + credentials.getOtherParameters().get("authentication_token"));
+                    System.out.println("userId = " + credentials.getUserId());
+                    CredentialsManager.getInstance().saveCredentials(implementation, credentials);
                 });
+                break;
             case Dropbox:
-                /*Client wakeLauncherClient = new Client(new URL("https://awsec2wakelauncher.herokuapp.com"));
-                Client.IpInfo ipInfo = wakeLauncherClient.launchAndWaitForInstance("i-0e8df6301f6179842");
-                String dropboxSecret;
-                int counter = 0;
-                while (true) {
-                    try {
-                        dropboxSecret = APIKeyClient.getApiKey(ipInfo.getInstanceIp(), "cloudPreloaderDropboxSecret");
-                        break;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        counter++;
-                        if (counter >= 10)
-                            throw e;
-                    }
-                }
-                DbxAppInfo appInfo = new DbxAppInfo("gog090k20yty565", dropboxSecret);
-                DbxRequestConfig requestConfig = new DbxRequestConfig("cloudPreloaderDesktop");
-                DbxWebAuth webAuth = new DbxWebAuth(requestConfig, appInfo);
-                DbxWebAuth.Request webAuthRequest = DbxWebAuth.newRequestBuilder()
-                        .withNoRedirect()
-                        .build();
-
-                String authorizeUrl = webAuth.authorize(webAuthRequest);*/
-                OAUTHSetUpView.show(new URL("https://www.dropbox.com/oauth2/authorize"), "gog090k20yty565", new URL("https://fredplus10.me/oauthredirect"), (accessToken, authenticationToken, userId) -> {
-                    System.out.println("accessToken = " + accessToken);
-                    System.out.println("authenticationToken = " + authenticationToken);
-                    System.out.println("userId = " + userId);
-                });
+                OAUTHSetUpView.show(new URL("https://www.dropbox.com/oauth2/authorize"), "gog090k20yty565", new URL("https://fredplus10.me/oauthredirect"), (credentials) -> CredentialsManager.getInstance().saveCredentials(implementation, credentials));
+                break;
         }
     }
 
@@ -127,6 +105,7 @@ public class GUI {
 
         servicePicker.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             send.setDisable(!CredentialsManager.getInstance().hasCredentials(newValue));
+            setup.setDisable(false);
         });
     }
 }

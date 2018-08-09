@@ -28,10 +28,10 @@ import java.net.URL;
 
 public class IFTTTService extends Service {
     @Override
-    public void sendFile(URL url, Credentials credentials, Runnable onFinished) throws IOException {
+    public void sendFile(URL url, String fileName, Credentials credentials, Runnable onFinished) throws IOException {
         if (!(credentials instanceof SimpleApiKeyCredentials))
             throw new IllegalArgumentException("credentials must be of type SimpleApiKeyCredentials");
-        String res = Internet.sendEventToIFTTTMakerChannel(((SimpleApiKeyCredentials) credentials).getApiKey(), "cloudpreloader.uploadfile", url.toExternalForm());
+        String res = Internet.sendEventToIFTTTMakerChannel(((SimpleApiKeyCredentials) credentials).getApiKey(), "cloudpreloader.uploadfile", url.toExternalForm(), fileName);
         System.out.println(res);
     }
 
