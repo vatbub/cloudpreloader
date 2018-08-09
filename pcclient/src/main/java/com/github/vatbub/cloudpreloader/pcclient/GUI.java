@@ -21,15 +21,10 @@ package com.github.vatbub.cloudpreloader.pcclient;
  */
 
 
-import com.dropbox.core.DbxAppInfo;
-import com.dropbox.core.DbxRequestConfig;
-import com.dropbox.core.DbxWebAuth;
-import com.github.vatbub.awsec2wakelauncher.applicationclient.Client;
 import com.github.vatbub.cloudpreloader.logic.Credentials;
 import com.github.vatbub.cloudpreloader.logic.CredentialsManager;
 import com.github.vatbub.cloudpreloader.logic.Service;
 import com.github.vatbub.cloudpreloader.logic.SimpleApiKeyCredentials;
-import com.github.vatbub.safeAPIKeyStore.client.APIKeyClient;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -90,7 +85,7 @@ public class GUI {
                     System.out.println("userId = " + userId);
                 });
             case Dropbox:
-                Client wakeLauncherClient = new Client(new URL("https://awsec2wakelauncher.herokuapp.com"));
+                /*Client wakeLauncherClient = new Client(new URL("https://awsec2wakelauncher.herokuapp.com"));
                 Client.IpInfo ipInfo = wakeLauncherClient.launchAndWaitForInstance("i-0e8df6301f6179842");
                 String dropboxSecret;
                 int counter = 0;
@@ -112,8 +107,8 @@ public class GUI {
                         .withNoRedirect()
                         .build();
 
-                String authorizeUrl = webAuth.authorize(webAuthRequest);
-                OAUTHSetUpView.show(new URL("https://www.dropbox.com/oauth2/authorize"), appInfo.getKey(), new URL("https://www.fredplus10.me/oauthredirect"), (accessToken, authenticationToken, userId) -> {
+                String authorizeUrl = webAuth.authorize(webAuthRequest);*/
+                OAUTHSetUpView.show(new URL("https://www.dropbox.com/oauth2/authorize"), "gog090k20yty565", new URL("https://fredplus10.me/oauthredirect"), (accessToken, authenticationToken, userId) -> {
                     System.out.println("accessToken = " + accessToken);
                     System.out.println("authenticationToken = " + authenticationToken);
                     System.out.println("userId = " + userId);

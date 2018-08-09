@@ -2,6 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <repositories>
+        <repository>
+            <id>com.teamdev</id>
+            <url>http://maven.teamdev.com/repository/products</url>
+        </repository>
+    </repositories>
+
     <parent>
         <artifactId>cloudpreloader</artifactId>
         <groupId>com.github.vatbub</groupId>
@@ -26,7 +34,12 @@
             <groupId>com.github.vatbub</groupId>
             <artifactId>cloudpreloader.logic</artifactId>
             <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <!-- Ensures that the license is installed to the local maven repo prior to building this module -->
+            <groupId>com.github.vatbub</groupId>
+            <artifactId>cloudpreloader.jxbrowserlicense</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.github.vatbub</groupId>
@@ -37,6 +50,32 @@
             <groupId>com.github.vatbub</groupId>
             <artifactId>safeAPIKeyStore.client</artifactId>
             <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.teamdev.jxbrowser</groupId>
+            <artifactId>jxbrowser-win32</artifactId>
+            <version>6.21</version>
+        </dependency>
+        <dependency>
+            <groupId>com.teamdev.jxbrowser</groupId>
+            <artifactId>jxbrowser-win64</artifactId>
+            <version>6.21</version>
+        </dependency>
+        <dependency>
+            <groupId>com.teamdev.jxbrowser</groupId>
+            <artifactId>jxbrowser-linux64</artifactId>
+            <version>6.21</version>
+        </dependency>
+        <dependency>
+            <groupId>com.teamdev.jxbrowser</groupId>
+            <artifactId>jxbrowser-mac</artifactId>
+            <version>6.21</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.teamdev.jxbrowser</groupId>
+            <artifactId>jxbrowser-license</artifactId>
+            <version>6.21</version>
         </dependency>
     </dependencies>
 

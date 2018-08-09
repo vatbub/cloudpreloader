@@ -23,6 +23,8 @@ package com.github.vatbub.cloudpreloader.pcclient;
 
 import com.github.vatbub.common.core.Common;
 import com.github.vatbub.common.core.logging.FOKLogger;
+import com.teamdev.jxbrowser.chromium.BrowserCore;
+import com.teamdev.jxbrowser.chromium.internal.Environment;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -50,6 +52,14 @@ public class Main extends Application {
 
     public static Main getInstance() {
         return instance;
+    }
+
+    @Override
+    public void init() throws Exception {
+        // On Mac OS X Chromium engine must be initialized in non-UI thread.
+        if (Environment.isMac()) {
+            BrowserCore.initialize();
+        }
     }
 
     @Override

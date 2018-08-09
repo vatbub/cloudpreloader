@@ -21,18 +21,18 @@ package com.github.vatbub.cloudpreloader.pcclient;
  */
 
 
-import javafx.concurrent.Worker;
+import com.teamdev.jxbrowser.chromium.events.*;
+import com.teamdev.jxbrowser.chromium.javafx.BrowserView;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
-import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +55,7 @@ public class OAUTHSetUpView {
     private TextField urlTextBox;
 
     @FXML
-    private WebView webView;
+    private BrowserView webView;
 
     @FXML
     private ProgressBar statusBar;
@@ -72,9 +72,9 @@ public class OAUTHSetUpView {
                 .append("&response_type=token&redirect_uri=")
                 .append(redirectURL.toExternalForm());
 
-        if (scopes!=null && scopes.size()>0)
+        if (scopes != null && scopes.size() > 0)
             finalURL.append("&scope=")
-                .append(String.join(" ", scopes));
+                    .append(String.join(" ", scopes));
 
         show(new URL(finalURL.toString()), redirectURL, onResultRunnable);
     }
@@ -130,7 +130,69 @@ public class OAUTHSetUpView {
     }
 
     private void registerWebviewHooks() {
-        webView.getEngine().getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
+        webView.getBrowser().addStatusListener(statusEvent -> System.out.println("Status event: " + statusEvent.getText()));
+
+        webView.getBrowser().addLoadListener(new LoadListener() {
+            @Override
+            public void onStartLoadingFrame(StartLoadingEvent startLoadingEvent) {
+                System.out.println("onStartLoadingFrame: ");
+                urlTextBox.setText(webView.getBrowser().getURL());
+            }
+
+            @Override
+            public void onProvisionalLoadingFrame(ProvisionalLoadingEvent provisionalLoadingEvent) {
+                System.out.println("onProvisionalLoadingFrame: ");
+            }
+
+            @Override
+            public void onFinishLoadingFrame(FinishLoadingEvent finishLoadingEvent) {
+                System.out.println("onFinishLoadingFrame: ");
+                String location = webView.getBrowser().getURL();
+                System.out.println(location);
+                if (location.startsWith(getRedirectURL().toExternalForm())) {
+                    Map<String, String> queryMap = getQueryMap(location.split("#")[1]);
+
+                    String accessToken = null;
+                    String authenticationToken = null;
+                    String userId = null;
+
+                    for (Map.Entry<String, String> entry : queryMap.entrySet()) {
+                        switch (entry.getKey()) {
+                            case "access_token":
+                                accessToken = entry.getValue();
+                                break;
+                            case "authentication_token":
+                                authenticationToken = entry.getValue();
+                                break;
+                            case "user_id":
+                                userId = entry.getValue();
+                                break;
+                        }
+                    }
+
+                    Platform.runLater(() ->getStage().hide());
+                    onResultRunnable.onResult(accessToken, authenticationToken, userId);
+
+                }
+            }
+
+            @Override
+            public void onFailLoadingFrame(FailLoadingEvent failLoadingEvent) {
+                System.out.println("onFailLoadingFrame: ");
+            }
+
+            @Override
+            public void onDocumentLoadedInFrame(FrameLoadEvent frameLoadEvent) {
+                System.out.println("onDocumentLoadedInFrame: ");
+            }
+
+            @Override
+            public void onDocumentLoadedInMainFrame(LoadEvent loadEvent) {
+                System.out.println("onDocumentLoadedInMainFrame: ");
+            }
+        });
+
+        /*webView.getEngine().getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.equals(Worker.State.SUCCEEDED))
                 return;
 
@@ -164,10 +226,10 @@ public class OAUTHSetUpView {
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }); */
 
-        webView.getEngine().getLoadWorker().progressProperty().addListener((observable, oldValue, newValue) -> statusBar.setProgress(newValue.doubleValue()));
-        webView.getEngine().locationProperty().addListener((observable, oldValue, newValue) -> urlTextBox.setText(newValue));
+        // webView.getEngine().getLoadWorker().progressProperty().addListener((observable, oldValue, newValue) -> statusBar.setProgress(newValue.doubleValue()));
+        // webView.getEngine().locationProperty().addListener((observable, oldValue, newValue) -> urlTextBox.setText(newValue));
     }
 
     public Stage getStage() {
@@ -186,7 +248,7 @@ public class OAUTHSetUpView {
         if (!initialized || getAuthorizationURL() == null)
             return;
 
-        webView.getEngine().load(getAuthorizationURL().toString());
+        webView.getBrowser().loadURL(getAuthorizationURL().toString());
     }
 
     public URL getAuthorizationURL() {
