@@ -8,6 +8,8 @@ public abstract class Service {
         switch (implementation) {
             case IFTTT:
                 return new IFTTTService();
+            case OneDrive:
+                return new OneDriveService();
             default:
                 throw new IllegalArgumentException();
         }
@@ -18,6 +20,6 @@ public abstract class Service {
     public abstract Class<? extends Credentials> getDefaultCredentialsClass();
 
     public enum KnownImplementations {
-        IFTTT
+        IFTTT, OneDrive, Dropbox
     }
 }

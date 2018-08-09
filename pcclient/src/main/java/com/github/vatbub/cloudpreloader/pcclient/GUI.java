@@ -1,9 +1,14 @@
 package com.github.vatbub.cloudpreloader.pcclient;
 
+import com.dropbox.core.DbxAppInfo;
+import com.dropbox.core.DbxRequestConfig;
+import com.dropbox.core.DbxWebAuth;
+import com.github.vatbub.awsec2wakelauncher.applicationclient.Client;
 import com.github.vatbub.cloudpreloader.logic.Credentials;
 import com.github.vatbub.cloudpreloader.logic.CredentialsManager;
 import com.github.vatbub.cloudpreloader.logic.Service;
 import com.github.vatbub.cloudpreloader.logic.SimpleApiKeyCredentials;
+import com.github.vatbub.safeAPIKeyStore.client.APIKeyClient;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -13,6 +18,8 @@ import javafx.scene.control.TextField;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class GUI {
@@ -44,15 +51,52 @@ public class GUI {
     }
 
     @FXML
-    void setupOnAction(ActionEvent event) throws IOException {
+    void setupOnAction(ActionEvent event) throws Exception {
         Service.KnownImplementations implementation = servicePicker.getSelectionModel().getSelectedItem();
-        switch(implementation){
+        switch (implementation) {
             case IFTTT:
                 IFTTTSetUpView.show((makerApiKey -> {
                     CredentialsManager.getInstance().saveCredentials(implementation, new SimpleApiKeyCredentials(makerApiKey));
                     send.setDisable(false);
                 }));
                 break;
+            case OneDrive:
+                List<String> scopes = new ArrayList<>();
+                scopes.add("User.Read");
+                OAUTHSetUpView.show(new URL("https://login.microsoftonline.com/common/oauth2/v2.0/authorize"), "05e2a1c2-fedc-431e-81b5-4da5676e5961", new URL("https://login.live.com/oauth20_desktop.srf"), scopes, (accessToken, authenticationToken, userId) -> {
+                    System.out.println("accessToken = " + accessToken);
+                    System.out.println("authenticationToken = " + authenticationToken);
+                    System.out.println("userId = " + userId);
+                });
+            case Dropbox:
+                Client wakeLauncherClient = new Client(new URL("https://awsec2wakelauncher.herokuapp.com"));
+                Client.IpInfo ipInfo = wakeLauncherClient.launchAndWaitForInstance("i-0e8df6301f6179842");
+                String dropboxSecret;
+                int counter = 0;
+                while (true) {
+                    try {
+                        dropboxSecret = APIKeyClient.getApiKey(ipInfo.getInstanceIp(), "cloudPreloaderDropboxSecret");
+                        break;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        counter++;
+                        if (counter >= 10)
+                            throw e;
+                    }
+                }
+                DbxAppInfo appInfo = new DbxAppInfo("gog090k20yty565", dropboxSecret);
+                DbxRequestConfig requestConfig = new DbxRequestConfig("cloudPreloaderDesktop");
+                DbxWebAuth webAuth = new DbxWebAuth(requestConfig, appInfo);
+                DbxWebAuth.Request webAuthRequest = DbxWebAuth.newRequestBuilder()
+                        .withNoRedirect()
+                        .build();
+
+                String authorizeUrl = webAuth.authorize(webAuthRequest);
+                OAUTHSetUpView.show(new URL("https://www.dropbox.com/oauth2/authorize"), appInfo.getKey(), new URL("https://www.fredplus10.me/oauthredirect"), (accessToken, authenticationToken, userId) -> {
+                    System.out.println("accessToken = " + accessToken);
+                    System.out.println("authenticationToken = " + authenticationToken);
+                    System.out.println("userId = " + userId);
+                });
         }
     }
 
