@@ -23,6 +23,7 @@ package com.github.vatbub.cloudpreloader.pcclient;
 
 import com.github.vatbub.cloudpreloader.logic.OAuthCredentials;
 import com.teamdev.jxbrowser.chromium.events.*;
+import com.teamdev.jxbrowser.chromium.internal.Environment;
 import com.teamdev.jxbrowser.chromium.javafx.BrowserView;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -103,9 +104,10 @@ public class OAUTHSetUpView {
         // primaryStage.getIcons().add(new Image(MainWindow.class.getResourceAsStream("icon.png")));
 
         controller.getStage().setOnCloseRequest((event) -> {
-            // controller.webView.getBrowser().stop();
-            // System.setProperty("jxbrowser.await.timeout.seconds", "2");
-            // controller.webView.getBrowser().dispose();
+            if (Environment.isWindows() || Environment.isWindows64())
+                new Thread(() -> controller.webView.getBrowser().dispose()).start();
+            else
+                controller.webView.getBrowser().dispose();
         });
 
         controller.getStage().show();
@@ -155,7 +157,7 @@ public class OAUTHSetUpView {
 
                     OAuthCredentials credentials = new OAuthCredentials(queryMap);
 
-                    Platform.runLater(() ->getStage().hide());
+                    Platform.runLater(() -> getStage().hide());
                     getOnResultRunnable().onResult(credentials);
                 }
             }
